@@ -1,0 +1,19 @@
+{
+    "name": "nikolays93/phpmailwebinterface",
+    "description": "Interface addon for php mailer",
+    "authors": [
+        {
+            "name": "NikolayS93",
+            "email": "NikolayS93@ya.ru"
+        }
+    ],
+    "repositories": [
+        {
+            "type": "git",
+            "url": "https://github.com/nikolays93/PHPMailInterface"
+        }
+    ],
+    "require": {
+        "nikolays93/phpmailinterface": "dev-master"
+    }
+}

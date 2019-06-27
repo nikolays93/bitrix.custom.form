@@ -1,0 +1,12 @@
+.result .summary {
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.result.success {
+    color: green;
+}
+
+.result.failure {
+    color: red;
+}
