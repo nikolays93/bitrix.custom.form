@@ -20,6 +20,8 @@ if( !function_exists('esc_cyr') ) {
  */
 
 $allFields = array();
+$allLessFields = array();
+
 if( is_array($arCurrentValues['FIELDS']) ) {
     foreach ($arCurrentValues['FIELDS'] as $field)
     {
@@ -33,22 +35,42 @@ if( is_array($arCurrentValues['FIELDS']) ) {
 
         if( !$fieldID ) continue;
         $allFields[ $fieldID ] = trim($field) . " ($fieldID)";
+        $allLessFields[ $fieldID ] = trim($field);
     }
 }
 
 $arComponentParameters = array(
-    "GROUPS" => array(
-        "BASE",
-        "DATA_SOURCE",
-        // "VISUAL",
-        // "USER_CONSENT",
-        // "URL_TEMPLATES",
-        // "SEF_MODE",
-        // "AJAX_SETTINGS",
-        // "CACHE_SETTINGS",
-        // "ADDITIONAL_SETTINGS",
-    ),
+    // "GROUPS" => array(
+    //     // "BASE",
+    //     // "DATA_SOURCE",
+    //     // "VISUAL",
+    //     // "USER_CONSENT",
+    //     // "URL_TEMPLATES",
+    //     // "SEF_MODE",
+    //     // "AJAX_SETTINGS",
+    //     // "CACHE_SETTINGS",
+    //     // "ADDITIONAL_SETTINGS",
+    // ),
     "PARAMETERS" => array(
+        "FROM_NAME" => array(
+            "PARENT" => "BASE",
+            "NAME" => "Имя администратора",
+            "TYPE" => "STRING",
+            "DEFAULT" => "Администратор сайта",
+        ),
+        "SUBJECT" => array(
+            "PARENT" => "BASE",
+            "NAME" => "Тема сообщения",
+            "TYPE" => "STRING",
+            "DEFAULT" => "Сообщение с сайта",
+        ),
+        "TO" => array(
+            "PARENT" => "BASE",
+            "NAME" => "Получатель",
+            "TYPE" => "STRING",
+            "DEFAULT" => "nikolays93@ya.ru",
+        ),
+
         "FIELDS" => array(
             "PARENT" => "BASE",
             "NAME" => "Поля формы",
@@ -68,28 +90,17 @@ $arComponentParameters = array(
             "VALUES" => $allFields,
         ),
 
-        "FROM_NAME" => array(
+        "SAVE_TO_IBLOCK" => array(
             "PARENT" => "DATA_SOURCE",
-            "NAME" => "Имя администратора",
-            "TYPE" => "STRING",
-            "DEFAULT" => "Администратор сайта",
-        ),
-        "SUBJECT" => array(
-            "PARENT" => "DATA_SOURCE",
-            "NAME" => "Тема сообщения",
-            "TYPE" => "STRING",
-            "DEFAULT" => "Сообщение с сайта",
-        ),
-        "TO" => array(
-            "PARENT" => "DATA_SOURCE",
-            "NAME" => "Получатель",
-            "TYPE" => "STRING",
-            "DEFAULT" => "nikolays93@ya.ru",
+            "NAME" => "Сохранить в инфоблок",
+            "TYPE" => "CHECKBOX",
+            "DEFAULT" => "N",
+            "REFRESH" => "Y",
         ),
     ),
 );
 
-foreach ($allFields as $field_id => $field_name)
+foreach ($allLessFields as $field_id => $field_name)
 {
     $arComponentParameters["PARAMETERS"]["TYPE_" . strtoupper($field_id) ] = array(
         "PARENT" => "BASE",
@@ -104,3 +115,109 @@ foreach ($allFields as $field_id => $field_name)
         ),
     );
 }
+
+if ( CModule::IncludeModule("iblock") && 'Y' == $arCurrentValues['SAVE_TO_IBLOCK'] ) {
+    /**
+     * Get iblock types
+     * @var array
+     */
+    $iblockTypes = \Bitrix\Iblock\TypeTable::getList(array(
+        'select' => array('ID', 'LANG_MESSAGE'),
+        'filter' => array('!ID' => 'rest_entity')
+    ))->FetchAll();
+
+    $arIBlockTypes = array();
+    foreach ($iblockTypes as $iblockType)
+    {
+        $arIBlockTypes[ $iblockType['ID'] ] =!empty($iblockType['IBLOCK_TYPE_LANG_MESSAGE_ELEMENTS_NAME']) ?
+            $iblockType['IBLOCK_TYPE_LANG_MESSAGE_ELEMENTS_NAME'] :
+            $iblockType['ID'];
+    }
+
+    $arComponentParameters["PARAMETERS"]["IBLOCK_TYPE"] = array(
+        "PARENT" => "DATA_SOURCE",
+        "NAME" => "Тип инфоблока",
+        "TYPE" => "LIST",
+        "REFRESH" =>  "Y",
+        "VALUES" => $arIBlockTypes,
+    );
+
+    /**
+     * Get iblocks by type
+     * @var array $args
+     */
+    reset($arIBlockTypes);
+    if( !$arCurrentValues['IBLOCK_TYPE'] && is_array($arIBlockTypes) ) {
+        $arCurrentValues['IBLOCK_TYPE'] = key($arIBlockTypes);
+    }
+
+    $args = array(
+        'select' => array('ID', 'NAME'),
+        'filter' => array(
+            'IBLOCK_TYPE_ID' => $arCurrentValues['IBLOCK_TYPE'],
+        ),
+    );
+
+    /**
+     * @var array list of b_iblock_element
+     */
+    $iblocks = \Bitrix\Iblock\IBlockTable::getList($args)->FetchAll();
+
+    $iblocksList = array();
+    foreach ($iblocks as $iblock)
+    {
+        $iblocksList[ $iblock['ID'] ] = $iblock['NAME'];
+    }
+
+    $arComponentParameters["PARAMETERS"]["IBLOCK_ID"] = array(
+        "PARENT" => "DATA_SOURCE",
+        "NAME" => "ID инфоблока",
+        "REFRESH" => "Y",
+        "TYPE" => "LIST",
+        "VALUES" => $iblocksList,
+    );
+
+    $eAllFields = array_merge(array('' => 'Пусто (Не указывать)'), $allFields);
+
+    $arComponentParameters["PARAMETERS"]["ELEMENT_TITLE"] = array(
+        "PARENT" => "DATA_SOURCE",
+        "NAME" => "Заголовок записи",
+        "TYPE" => "LIST",
+        "VALUES" => array_merge(array('' => 'Новая запись от #DATE#'), $allFields),
+    );
+
+    $arComponentParameters["PARAMETERS"]["ELEMENT_PREVIEW_TEXT"] = array(
+        "PARENT" => "DATA_SOURCE",
+        "NAME" => "Описание для анонса",
+        "TYPE" => "LIST",
+        "VALUES" => $eAllFields,
+    );
+
+    $arComponentParameters["PARAMETERS"]["DETAIL_TEXT"] = array(
+        "PARENT" => "DATA_SOURCE",
+        "NAME" => "Детальное описание",
+        "TYPE" => "LIST",
+        "VALUES" => $eAllFields,
+    );
+
+    $args = array(
+        'select' => array('ID', 'NAME'),
+        'filter' => array(
+            'IBLOCK_ID' => $arCurrentValues['IBLOCK_ID'],
+        ),
+    );
+
+    $properties = \Bitrix\Iblock\PropertyTable::getList($args)->FetchAll();
+
+    foreach ($properties as $property)
+    {
+        $arComponentParameters["PARAMETERS"]["PROPERTY_" . $property['ID']] = array(
+            "PARENT" => "DATA_SOURCE",
+            "NAME" => 'Свойство ' . $property['NAME'],
+            "TYPE" => "LIST",
+            "VALUES" => $eAllFields,
+        );
+    }
+}
+
+return $arComponentParameters;
