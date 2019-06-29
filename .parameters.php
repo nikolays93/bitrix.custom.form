@@ -70,6 +70,12 @@ $arComponentParameters = array(
             "TYPE" => "STRING",
             "DEFAULT" => "nikolays93@ya.ru",
         ),
+        "TECH_ADDITIONAL" => array(
+            "PARENT" => "BASE",
+            "NAME" => "Добавить тех. информацию в письмо",
+            "TYPE" => "CHECKBOX",
+            "DEFAULT" => "Y",
+        ),
         "USER_CONSENT" => array(),
 
         "FIELDS" => array(
@@ -178,13 +184,23 @@ if ( CModule::IncludeModule("iblock") && 'Y' == $arCurrentValues['SAVE_TO_IBLOCK
         "VALUES" => $iblocksList,
     );
 
-    $eAllFields = array_merge(array('' => 'Пусто (Не указывать)'), $allFields);
+    $eAllFields = array_merge(array('' => 'Не указывать'), $allFields);
 
     $arComponentParameters["PARAMETERS"]["ELEMENT_TITLE"] = array(
         "PARENT" => "DATA_SOURCE",
         "NAME" => "Заголовок записи",
         "TYPE" => "LIST",
         "VALUES" => array_merge(array('' => 'Новая запись от #DATE#'), $allFields),
+    );
+
+    $arComponentParameters["PARAMETERS"]["ELEMENT_CODE"] = array(
+        "PARENT" => "DATA_SOURCE",
+        "NAME" => "Символьный код записи",
+        "TYPE" => "LIST",
+        "VALUES" => array_merge(array(
+            '' => 'Не указывать',
+            'DATE' => 'Дата в формате Ymdhis'
+        ), $allFields),
     );
 
     $arComponentParameters["PARAMETERS"]["ELEMENT_PREVIEW_TEXT"] = array(

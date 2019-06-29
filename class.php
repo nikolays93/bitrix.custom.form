@@ -50,11 +50,11 @@ class CustomFormBitrixComponent extends CBitrixComponent
             /** @var bool  must be empty for spam filter */
             $is_spam = !empty($_REQUEST["surname"]);
 
+            require __DIR__ . '/vendor/autoload.php';
+
             if( !empty($_REQUEST['is_ajax']) ) {
                 header('Content-Type: application/json');
                 $APPLICATION->RestartBuffer();
-
-                require __DIR__ . '/vendor/autoload.php';
 
                 if( $is_spam ) { header($_SERVER['SERVER_PROTOCOL'] . ' 403 Forbidden', true, 403); die(); }
             }
@@ -85,7 +85,7 @@ class CustomFormBitrixComponent extends CBitrixComponent
             // execute
             $Maili->sendMail();
 
-            if( 'Y' == $this->arParams['SAVE_TO_IBLOCK'] ) {
+            if( 'Y' == $this->arParams['SAVE_TO_IBLOCK'] && empty( $Maili->getErrors() ) ) {
                 $this->addElement( $fields );
             }
 
@@ -130,7 +130,7 @@ class CustomFormBitrixComponent extends CBitrixComponent
         }
 
         // Field with this key must be filled
-        foreach ($this->arParams['REQUIRED_FIELDS'] as $requiredField)
+        foreach (array_filter($this->arParams['REQUIRED_FIELDS']) as $requiredField)
         {
             $Maili->setRequired($requiredField);
         }
@@ -151,7 +151,7 @@ class CustomFormBitrixComponent extends CBitrixComponent
         }
 
         // Technical additional information
-        if( $body ) {
+        if( $body && "Y" == $this->arParams['TECH_ADDITIONAL'] ) {
             $body.= "\r\n";
             $body.= "URI запроса: ". $_SERVER['REQUEST_URI'] . "\r\n";
             $body.= "URL источника запроса: " .
@@ -172,7 +172,7 @@ class CustomFormBitrixComponent extends CBitrixComponent
             "IBLOCK_ID"         => $this->arParams['IBLOCK_ID'],
             "ACTIVE"            => "N",
             "NAME"              => isset( $fields[ $this->arParams['ELEMENT_TITLE'] ] ) ? $fields[ $this->arParams['ELEMENT_TITLE'] ] : '',
-            "CODE"              => isset( $fields[ $this->arParams['ELEMENT_TITLE'] ] ) ? esc_cyr($fields[ $this->arParams['ELEMENT_TITLE'] ]) : '',
+            "CODE"              => isset( $fields[ $this->arParams['ELEMENT_CODE'] ] ) ? esc_cyr($fields[ $this->arParams['ELEMENT_CODE'] ]) : '',
             "PREVIEW_TEXT"      => isset( $fields[ $this->arParams['ELEMENT_PREVIEW_TEXT'] ] ) ? $fields[ $this->arParams['ELEMENT_PREVIEW_TEXT'] ] : '',
             "DETAIL_TEXT"       => isset( $fields[ $this->arParams['ELEMENT_DETAIL_TEXT'] ] ) ? $fields[ $this->arParams['ELEMENT_DETAIL_TEXT'] ] : '',
         );
@@ -180,6 +180,9 @@ class CustomFormBitrixComponent extends CBitrixComponent
         // Prepare name
         if( !$arLoadProductArray['NAME'] ) {
             $arLoadProductArray['NAME'] = 'Новая запись от ' . date('d.m.Y h:i:s');
+        }
+
+        if( "DATE" == $this->arParams['ELEMENT_CODE'] ) {
             $arLoadProductArray['CODE'] = date('Ymdhis');
         }
 
