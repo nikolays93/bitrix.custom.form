@@ -70,6 +70,7 @@ $arComponentParameters = array(
             "TYPE" => "STRING",
             "DEFAULT" => "nikolays93@ya.ru",
         ),
+        "USER_CONSENT" => array(),
 
         "FIELDS" => array(
             "PARENT" => "BASE",

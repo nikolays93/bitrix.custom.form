@@ -40,6 +40,20 @@
         <input type="text" class="form-control" name="surname"></input>
     </div>
 
+    <?if('Y' == $arParams['USER_CONSENT']):?>
+    <?$APPLICATION->IncludeComponent(
+        "bitrix:main.userconsent.request",
+        "custom.form",
+        array(
+            "ID" => $arParams["USER_CONSENT_ID"],
+            "IS_CHECKED" => $arParams["USER_CONSENT_IS_CHECKED"],
+            "AUTO_SAVE" => "Y",
+            "IS_LOADED" => $arParams["USER_CONSENT_IS_LOADED"],
+        ),
+        $component
+    );?>
+    <?endif;?>
+
     <input type="hidden" name="action" value="sendmail">
     <button type="submit" class="btn btn-default">Отправить</button>
 
